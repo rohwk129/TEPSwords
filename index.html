@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Voca (90)</title>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f8f9fa; margin: 0; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        h1 { color: #202124; }
+        
+        .btn-group { display: flex; gap: 10px; margin-bottom: 20px; width: 100%; max-width: 500px; }
+        button { flex: 1; border: none; padding: 15px; font-size: 14px; font-weight: bold; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s; }
+        
+        #shuffle-btn { background-color: #34a853; color: white; }
+        #toggle-all-btn { background-color: #1a73e8; color: white; }
+        
+        /* 페이지 조절 버튼 스타일 */
+        .page-ctrl { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+        .page-btn { background-color: #fff; border: 1px solid #ddd; padding: 8px 15px; border-radius: 8px; cursor: pointer; }
+        .page-btn:disabled { background-color: #eee; cursor: not-allowed; }
+
+        .voca-table { width: 100%; max-width: 500px; border-collapse: collapse; background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.08); }
+        .voca-table th { background-color: #f1f3f4; color: #5f6368; padding: 15px; }
+        .voca-table td { padding: 15px; border-bottom: 1px solid #f1f1f1; text-align: center; }
+
+        .word-en { font-weight: bold; color: #1a73e8; font-size: 18px; }
+        .meaning { cursor: pointer; color: #ea4335; font-weight: 500; padding: 5px; border-radius: 5px; display: block; }
+        .hidden { background-color: #acd598; color: #acd598; }
+        
+        .footer { margin-top: 20px; color: #70757a; font-size: 0.85em; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <h1>English Word List</h1>
+    
+    <div class="btn-group">
+        <button id="shuffle-btn">🔄 순서 섞기</button>
+        <button id="toggle-all-btn">👁️ 전체 가리기/보기</button>
+    </div>
+
+    <div class="page-ctrl">
+        <button class="page-btn" id="prev-btn">◀ 이전</button>
+        <span id="page-info">1 / 2</span>
+        <button class="page-btn" id="next-btn">다음 ▶</button>
+    </div>
+
+    <table class="voca-table">
+        <thead>
+            <tr>
+                <th>단어</th>
+                <th>뜻</th>
+            </tr>
+        </thead>
+        <tbody id="voca-body"></tbody>
+    </table>
+
+    <p class="footer">뜻을 터치하면 정답이 보입니다.</p>
+
+    <script>
+let words = [
+        { en: "abandon", ko: "(v) 버리다, 포기하다" }, { en: "abbreviate", ko: "(v) 축약하다" }, { en: "aberration", ko: "(n) 일탈, 변형" },
+        { en: "abhor", ko: "(v) 혐오하다" }, { en: "abide", ko: "(v) 견디다, (규칙을) 준수하다" }, { en: "abject", ko: "(a) 비참한, 비굴한" },
+        { en: "abolish", ko: "(v) 폐지하다" }, { en: "abominable", ko: "(a) 가공할, 심히 끔찍한" }, { en: "abortive", ko: "(a) 실패한, 무산된" },
+        { en: "abound", ko: "(v) 아주 많다, 풍부하다" }, { en: "abruptly", ko: "(ad) 갑작스럽게, 퉁명스럽게" }, { en: "absenteeism", ko: "(n) 잦은 결석, 장기 결근" },
+        { en: "absolve", ko: "(v) 무죄를 선언하다, 면제하다" }, { en: "abstain", ko: "(v) 삼가다, 기권하다" }, { en: "abstract", ko: "(a) 추상적인 (n) 개요" },
+        { en: "abstruse", ko: "(a) 난해한, 심오한" }, { en: "absurd", ko: "(a) 터무니없는, 불합리한" }, { en: "abundance", ko: "(n) 풍부, 부유" },
+        { en: "abuse", ko: "(v) 남용하다, 학대하다" }, { en: "abysmal", ko: "(a) 최악의, 심연의" }, { en: "academic", ko: "(a) 학술적인" },
+        { en: "accede", ko: "(v) 응하다, 동의하다" }, { en: "accelerate", ko: "(v) 가속하다" }, { en: "accessible", ko: "(a) 접근 가능한" },
+        { en: "acclaim", ko: "(v) 찬사를 보내다 (n) 환호" }, { en: "accolade", ko: "(n) 영예, 칭찬" }, { en: "accommodate", ko: "(v) 수용하다, 숙박시키다" },
+        { en: "accomplice", ko: "(n) 공범" }, { en: "accordance", ko: "(n) 일치, 합치" }, { en: "accountable", ko: "(a) 책임이 있는" },
+        { en: "accumulate", ko: "(v) 축적하다, 모으다" }, { en: "accurate", ko: "(a) 정확한" }, { en: "accusation", ko: "(n) 비난, 고발" },
+        { en: "accustom", ko: "(v) 익숙해지게 하다" }, { en: "acerbic", ko: "(a) 신랄한, 가혹한" }, { en: "acknowledge", ko: "(v) 인정하다" },
+        { en: "acme", ko: "(n) 절정, 정점" }, { en: "acquire", ko: "(v) 습득하다, 획득하다" }, { en: "acrimonious", ko: "(a) 험악한, 신랄한" },
+        { en: "activate", ko: "(v) 활성화하다" }, { en: "acute", ko: "(a) 격심한, 예리한" }, { en: "adamant", ko: "(a) 요지부동의, 단호한" },
+        { en: "adapt", ko: "(v) 적응하다, 개조하다" }, { en: "addictive", ko: "(a) 중독성 있는" }, { en: "adept", ko: "(a) 능숙한 (n) 숙련자" },
+        { en: "adequate", ko: "(a) 적절한, 충분한" }, { en: "adhere", ko: "(v) 들러붙다, 고수하다" }, { en: "adjacent", ko: "(a) 인접한" },
+        { en: "adjourn", ko: "(v) 중단하다, 휴회하다" }, { en: "admonish", ko: "(v) 꾸짖다, 충고하다" }, { en: "adopt", ko: "(v) 채택하다, 입양하다" },
+        { en: "adroit", ko: "(a) 노련한, 영리한" }, { en: "adulterate", ko: "(v) 불순물을 섞다, 질을 떨어뜨리다" }, { en: "advent", ko: "(n) 출현, 도래" },
+        { en: "adversary", ko: "(n) 상대방, 적대자" }, { en: "adverse", ko: "(a) 부정적인, 불리한" }, { his: "adversely", ko: "(ad) 불리하게, 반대로" },
+        { en: "advocate", ko: "(v) 지지하다 (n) 옹호자" }, { en: "aesthetic", ko: "(a) 심미적인, 미적인" }, { en: "affable", ko: "(a) 상냥한" },
+        { en: "affectation", ko: "(n) 가장, 꾸밈" }, { en: "affiliate", ko: "(v) 제휴하다 (n) 계열사" }, { en: "affinity", ko: "(n) 친밀감, 유사성" },
+        { en: "affirm", ko: "(v) 단언하다, 확언하다" }, { en: "affliction", ko: "(n) 고난, 통증" }, { en: "affluence", ko: "(n) 풍요, 부유" },
+        { en: "afford", ko: "(v) ~할 여유가 있다" }, { en: "aggravate", ko: "(v) 악화시키다" }, { en: "aggregate", ko: "(n) 합계 (v) 모으다" },
+        { en: "agile", ko: "(a) 민첩한" }, { en: "agitate", ko: "(v) 선동하다, 불안하게 만들다" }, { en: "agonize", ko: "(v) 고민하다, 괴로워하다" },
+        { en: "agreeable", ko: "(a) 기분 좋은, 동의하는" }, { en: "alacrity", ko: "(n) 민활함, 선뜻 함" }, { en: "albeit", ko: "(conj) ~에도 불구하고" },
+        { en: "alienate", ko: "(v) 멀어지게 하다, 소외시키다" }, { en: "align", ko: "(v) 나란히 하다, 조정하다" }, { en: "allege", ko: "(v) 주장하다" },
+        { en: "alleviate", ko: "(v) 완화하다" }, { en: "allocate", ko: "(v) 할당하다" }, { en: "allude", ko: "(v) 암시하다" },
+        { en: "aloof", ko: "(a) 냉담한" }, { en: "alter", ko: "(v) 바꾸다" }, { en: "altruistic", ko: "(a) 이타적인" },
+        { en: "amalgamate", ko: "(v) 합병하다" }, { en: "ambiguous", ko: "(a) 모호한" }, { en: "ambivalent", ko: "(a) 상반된 감정이 공존하는" },
+        { en: "ameliorate", ko: "(v) 개선하다" }, { en: "amenable", ko: "(a) 순종하는" }, { en: "amenity", ko: "(n) 편의 시설" },
+        { en: "amiable", ko: "(a) 쾌활한, 정감 있는" }, { en: "amicable", ko: "(a) 우호적인" }, { en: "ample", ko: "(a) 충분한" },
+        { en: "amplify", ko: "(v) 증폭시키다" }, { en: "anachronism", ko: "(n) 시대착오" }, { en: "analogous", ko: "(a) 유사한" },
+        { en: "annihilate", ko: "(v) 전멸시키다" }, { en: "annul", ko: "(v) 무효로 하다" }, { en: "anomalous", ko: "(a) 변칙적인" },
+        { en: "anonymous", ko: "(a) 익명의" },         { en: "anticipate", ko: "(v) 예상하다, 기대하다" }, { en: "apathy", ko: "(n) 무관심, 냉담" }, { en: "appall", ko: "(v) 오싹하게 하다" },
+        { en: "appease", ko: "(v) 달래다, 진정시키다" }, { en: "appraise", ko: "(v) 살피다, 감정하다" }, { en: "apprehend", ko: "(v) 체포하다; 이해하다" },
+        { en: "approbation", ko: "(n) 승인, 찬성" }, { en: "appropriate", ko: "(a) 적절한 (v) 도용하다" }, { en: "approximate", ko: "(a) 대략의 (v) 비슷하다" },
+        { en: "aptitude", ko: "(n) 소질, 적성" }, { en: "arbitrary", ko: "(a) 임의적인, 독단적인" }, { en: "archaic", ko: "(a) 고대의, 구식의" },
+        { en: "ardent", ko: "(a) 열렬한, 열정적인" }, { en: "arduous", ko: "(a) 몹시 힘든, 고된" }, { en: "articulate", ko: "(v) 또박또박 말하다 (a) 명확한" },
+        { en: "ascertain", ko: "(v) 확인하다, 알아내다" }, { en: "aspiration", ko: "(n) 열망, 포부" }, { en: "assail", ko: "(v) 공격을 가하다" },
+        { en: "assent", ko: "(v) 찬성하다 (n) 승인" }, { en: "assertive", ko: "(a) 적극적인, 확신에 찬" }, { en: "assiduous", ko: "(a) 근면 성실한" },
+        { en: "assimilate", ko: "(v) 흡수하다, 동화되다" }, { en: "assuage", ko: "(v) 달래다, 완화하다" }, { en: "astute", ko: "(a) 영악한, 기민한" },
+        { en: "atrocity", ko: "(n) 잔혹 행위" }, { en: "attain", ko: "(v) 달성하다, 획득하다" }, { en: "attribute", ko: "(v) ~의 탓으로 돌리다 (n) 속성" },
+        { en: "audacious", ko: "(a) 대담한, 무례한" }, { en: "augment", ko: "(v) 늘리다, 증가시키다" }, { en: "austere", ko: "(a) 소박한; 엄격한" },
+        { en: "authentic", ko: "(a) 진본인, 정확한" }, { en: "autonomous", ko: "(a) 자율적인, 자치의" }, { en: "avarice", ko: "(n) 탐욕" },
+        { en: "averse", ko: "(a) ~을 싫어하는" }, { en: "baffle", ko: "(v) 당황하게 하다" }, { en: "banal", ko: "(a) 진부한, 평범한" },
+        { en: "barren", ko: "(a) 척박한, 열매가 안 열리는" }, { en: "bellicose", ko: "(a) 호전적인" }, { en: "beneficiary", ko: "(n) 수혜자, 수령인" },
+        { en: "benevolent", ko: "(a) 자애로운, 자비로운" }, { en: "benign", ko: "(a) 상냥한; 양성의" }, { en: "bewilder", ko: "(v) 어리둥절하게 만들다" },
+        { en: "bias", ko: "(n) 편견, 성향" }, { en: "blatant", ko: "(a) 노골적인, 뻔한" }, { en: "bleak", ko: "(a) 암울한, 절망적인" },
+        { en: "boisterous", ko: "(a) 활기가 넘치는, 시끄러운" }, { en: "bolster", ko: "(v) 북돋우다, 지지하다" }, { en: "breach", ko: "(n) 위반; 파괴" },
+        { en: "briskly", ko: "(ad) 활발하게, 씩씩하게" }, { en: "brittle", ko: "(a) 부서지기 쉬운" }, { en: "buttress", ko: "(v) 지지하다, 보강하다" },
+        { en: "calamity", ko: "(n) 재앙, 재난" }, { en: "callous", ko: "(a) 냉담한, 무감각한" }, { en: "camouflage", ko: "(n) 위장 (v) 감추다" },
+        { en: "candid", ko: "(a) 솔직한" }, { en: "capitulate", ko: "(v) 굴복하다, 항복하다" }, { en: "capricious", ko: "(a) 변덕스러운" },
+        { en: "captivate", ko: "(v) 마음을 사로잡다" }, { en: "casualty", ko: "(n) 사상자, 피해자" }, { en: "catalyst", ko: "(n) 촉매(제), 계기" },
+        { en: "categorical", ko: "(a) 단정적인, 절대적인" }, { en: "cautious", ko: "(a) 신중한, 조심스러운" }, { en: "censure", ko: "(v) 비난하다, 질책하다" },
+        { en: "chagrin", ko: "(n) 원통함, 분함" }, { en: "charismatic", ko: "(a) 카리스마 있는" }, { en: "chronological", ko: "(a) 시간 순서대로 된" },
+        { en: "circumspect", ko: "(a) 신중한" }, { en: "circumvent", ko: "(v) 피하다, 면하다" }, { en: "clandestine", ko: "(a) 은밀한, 비밀리에 하는" },
+        { en: "clemency", ko: "(n) 관용, 관대한 처분" }, { en: "clumsy", ko: "(a) 어설픈, 서투른" }, { en: "coalesce", ko: "(v) 합치다, 연합하다" },
+        { en: "coerce", ko: "(v) 강요하다, 강압하다" }, { en: "cognizant", ko: "(a) 인식하고 있는" }, { en: "coherent", ko: "(a) 일관성 있는, 논리 정연한" },
+        { en: "coincide", ko: "(v) 동시에 일어나다, 일치하다" }, { en: "collaborate", ko: "(v) 협력하다" }, { en: "collusion", ko: "(n) 공모, 결탁" },
+        { en: "commensurate", ko: "(a) 어울리는, 상응하는" }, { en: "commodity", ko: "(n) 상품, 원자재" }, { en: "compassion", ko: "(n) 연민, 동정심" },
+        { en: "compatible", ko: "(a) 호환되는, 양립할 수 있는" }, { en: "compelling", ko: "(a) 설득력 있는; 강렬한" }, { en: "compensate", ko: "(v) 보상하다, 보충하다" },
+        { en: "complacent", ko: "(a) 현실에 안주하는" }, { en: "comprehensive", ko: "(a) 포괄적인, 종합적인" }, { en: "compromise", ko: "(v) 타협하다; 손상시키다" },
+        { en: "compulsory", ko: "(a) 강제적인, 의무적인" }, { en: "concise", ko: "(a) 간결한" }, { en: "condemn", ko: "(v) 규탄하다, 선고를 내리다" },
+        { en: "condone", ko: "(v) 용납하다, 눈감아주다" }, { en: "conducive", ko: "(a) 도움이 되는" }, { en: "confiscate", ko: "(v) 압수하다" },
+        { en: "conform", ko: "(v) 따르다, 순응하다" }, { en: "congenial", ko: "(a) 마음이 맞는; 적절한" }, { en: "conjecture", ko: "(n) 추측 (v) 추측하다" },
+        { en: "connoisseur", ko: "(n) 감정가, 전문가" }, { en: "conscientious", ko: "(a) 양심적인; 성실한" }, { en: "consecutive", ko: "(a) 연이은, 계속되는" },
+        { en: "consensus", ko: "(n) 합의, 의견 일치" }
+    ];
+        let currentPage = 1;
+        const itemsPerPage = 30;
+        let allHidden = true;
+
+        const tbody = document.getElementById('voca-body');
+        const pageInfo = document.getElementById('page-info');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+
+        function renderWords() {
+            tbody.innerHTML = '';
+            
+            // 현재 페이지에 해당하는 데이터만 추출
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pagedWords = words.slice(start, end);
+
+            pagedWords.forEach(word => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="word-en">${word.en}</td>
+                    <td><span class="meaning ${allHidden ? 'hidden' : ''}">${word.ko}</span></td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // 페이지 정보 업데이트
+            pageInfo.innerText = `${currentPage} / ${Math.ceil(words.length / itemsPerPage)}`;
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === Math.ceil(words.length / itemsPerPage);
+        }
+
+        // 버튼 이벤트들
+        document.getElementById('shuffle-btn').onclick = () => {
+            words.sort(() => Math.random() - 0.5);
+            currentPage = 1;
+            renderWords();
+        };
+
+        document.getElementById('toggle-all-btn').onclick = () => {
+            allHidden = !allHidden;
+            renderWords();
+        };
+
+        prevBtn.onclick = () => { if(currentPage > 1) { currentPage--; renderWords(); } };
+        nextBtn.onclick = () => { if(currentPage < words.length/itemsPerPage) { currentPage++; renderWords(); } };
+
+        tbody.onclick = (e) => {
+            if (e.target.classList.contains('meaning')) e.target.classList.toggle('hidden');
+        };
+
+        renderWords();
+    </script>
+</body>
+
+</html>
+
+
